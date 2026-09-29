@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elenco Prodotti</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<h1>Elenco Prodotti</h1>
+
+<div th:if="${errore}" class="alert alert-error" th:text="${errore}"></div>
+
+<!-- Form di ricerca -->
+<form th:action="@{/prodotti}" method="get" class="filtri">
+    <div>
+        <label for="nome">Cerca prodotto</label>
+        <input type="text" id="nome" name="nome"
+               th:value="${nome}" placeholder="es. laptop">
+    </div>
+
+    <div>
+        <label for="categoria">Categoria</label>
+        <select id="categoria" name="categoria">
+            <option value="">Tutte</option>
+            <option th:each="c : ${categorieDisponibili}"
+                    th:value="${c}" th:text="${c}"
+                    th:selected="${c == categoria}">Categoria</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="sort">Ordina per</label>
+        <select id="sort" name="sort">
+            <option value="">--</option>
+            <option value="prezzo" th:selected="${sort == 'prezzo'}">Prezzo</option>
+            <option value="nome"   th:selected="${sort == 'nome'}">Nome</option>
+        </select>
+    </div>
+
+    <div>
+        <label for="direction">Direzione</label>
+        <select id="direction" name="direction">
+            <option value="asc"  th:selected="${direction == 'asc'}">Crescente</option>
+            <option value="desc" th:selected="${direction == 'desc'}">Decrescente</option>
+        </select>
+    </div>
+
+    <button type="submit">CERCA</button>
+</form>
+
+<!-- Tabella -->
+<div class="table-wrapper">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Prezzo</th>
+            <th>Quantità</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:if="${#lists.isEmpty(prodotti)}">
+            <td colspan="6" class="empty">Nessun prodotto trovato.</td>
+        </tr>
+        <tr th:each="p : ${prodotti}">
+            <td th:text="${p.id}">1</td>
+            <td th:text="${p.nome}">Nome</td>
+            <td>
+                <span class="badge" th:text="${p.categoria}">Categoria</span>
+            </td>
+            <td th:text="'€ ' + ${#numbers.formatDecimal(p.prezzo, 1, 'POINT', 2, 'COMMA')}">€ 0,00</td>
+            <td th:text="${p.quantita}">0</td>
+            <td>
+                <a th:href="@{/prodotti/{id}(id=${p.id})}"
+                   class="btn btn-info btn-sm">Dettaglio</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
