@@ -1,5 +1,6 @@
 package com.girque.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,9 +18,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 @RequestMapping("/api")
 public class ProdottoController {
 
-	List<ProdottoDTO> prodotti = List.of(
-			new ProdottoDTO(1, "nome", "descrizione", 1.99, "categoria1", 10, LocalDateTime.now()),
-			new ProdottoDTO(2, "nome2", "descrizione2", 999.99, "categoria2", 2, LocalDateTime.now()));
+	// TODO: da rimuovere quanto c'è il DB
+	private List<ProdottoDTO> prodotti = List.of(
+			new ProdottoDTO(1, "nome", "descrizione", new BigDecimal(1.99), "categoria", 10,
+					LocalDateTime.now()),
+			new ProdottoDTO(2, "nome2", "descrizione2", new BigDecimal(19.99), "categoria2", 2,
+					LocalDateTime.now()));
 
 	// GET /api/prodotti
 	@GetMapping("/prodotti")

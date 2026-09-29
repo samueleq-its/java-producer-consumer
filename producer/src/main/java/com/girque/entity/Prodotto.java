@@ -10,16 +10,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-@Entity 
+@Entity
 @Table(name = "prodotti")
 @Data
 public class Prodotto {
 
-    @Id 
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 
     private Long id;
-    private String name;
+    private String nome;
     private String descrizione;
     private BigDecimal prezzo;
     private String categoria;
