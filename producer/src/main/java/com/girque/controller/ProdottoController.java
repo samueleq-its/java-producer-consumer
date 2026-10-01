@@ -29,7 +29,7 @@ public class ProdottoController {
 		this.prodottoService = prodottoService;
 	}
 
-	@GetMapping("")
+	@GetMapping("") // ?nome=[nome]&categoria=[categoria]&sort=[colonna]&direction=[asc/desc]
 	public ResponseEntity<List<ProdottoDTO>> getProdotti(FiltroDTO filtro) {
 
 		return ResponseEntity.ok(prodottoService.trovaTutti(filtro));

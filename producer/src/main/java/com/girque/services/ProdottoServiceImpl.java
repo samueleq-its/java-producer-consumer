@@ -25,9 +25,10 @@ public class ProdottoServiceImpl implements ProdottoService {
 
 	@Override
 	public List<ProdottoDTO> trovaTutti(FiltroDTO filtro) {
-		// TODO implementare filtro
 		return prodottoRepository.findAll()
 				.stream()
+				.filter(filtro::matches)
+				// TODO sorting
 				.map(ProdottoDTO::fromProdotto)
 				.toList();
 	}
