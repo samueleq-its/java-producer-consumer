@@ -1,40 +1,35 @@
 package com.girque.dto;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import com.girque.entity.Prodotto;
 
-public record ProdottoDTO(
-		Long id,
+public record ProdottoRequestDTO(
 		String nome,
 		String descrizione,
 		BigDecimal prezzo,
 		String categoria,
-		int quantita,
-		LocalDateTime dataCreazione) {
+		int quantita) {
 
 	public Prodotto toProdotto() {
 		Prodotto p = new Prodotto();
-		p.setId(this.id);
+		p.setId(null);
 		p.setNome(this.nome);
 		p.setDescrizione(this.descrizione);
 		p.setPrezzo(this.prezzo);
 		p.setCategoria(this.categoria);
 		p.setQuantita(this.quantita);
-		p.setDataCreazione(this.dataCreazione);
+		p.setDataCreazione(null);
 		return p;
 	}
 
-	public static ProdottoDTO fromProdotto(Prodotto p) {
-		return new ProdottoDTO(
-				p.getId(),
+	public static ProdottoRequestDTO fromProdotto(Prodotto p) {
+		return new ProdottoRequestDTO(
 				p.getNome(),
 				p.getDescrizione(),
 				p.getPrezzo(),
 				p.getCategoria(),
-				p.getQuantita(),
-				p.getDataCreazione());
+				p.getQuantita());
 	}
 
 }

@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.girque.dto.FiltroDTO;
 import com.girque.dto.ProdottoDTO;
+import com.girque.dto.ProdottoRequestDTO;
 
 public interface ProdottoService {
 
@@ -12,9 +13,9 @@ public interface ProdottoService {
 
 	Optional<ProdottoDTO> trovaPerId(long id);
 
-	void creaProdotto();
+	ProdottoDTO creaProdotto(ProdottoRequestDTO pRequestDTO);
 
-	void aggiornaProdotto();
+	ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO);
 
-	void eliminaProdotto();
+	void eliminaProdotto(long id);
 }

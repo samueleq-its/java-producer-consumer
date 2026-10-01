@@ -1,6 +1,7 @@
 package com.girque.services;
 
 import com.girque.repos.ProdottoRepository;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import com.girque.dto.FiltroDTO;
 import com.girque.dto.ProdottoDTO;
+import com.girque.dto.ProdottoRequestDTO;
+import com.girque.entity.Prodotto;
 
 @Service
 public class ProdottoServiceImpl implements ProdottoService {
@@ -44,21 +47,30 @@ public class ProdottoServiceImpl implements ProdottoService {
 	}
 
 	@Override
-	public void creaProdotto() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'creaProdotto'");
+	public ProdottoDTO creaProdotto(ProdottoRequestDTO pRequestDTO) {
+		Prodotto p = pRequestDTO.toProdotto();
+		Prodotto nuovoProdotto = prodottoRepository.save(p);
+		return ProdottoDTO.fromProdotto(nuovoProdotto);
 	}
 
 	@Override
-	public void aggiornaProdotto() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'aggiornaProdotto'");
+	public ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO) {
+		if (prodottoRepository.findById(id).isEmpty()) {
+			// TODO come gestirlo?
+			return null;
+		}
+
+		Prodotto p = pRequestDTO.toProdotto();
+		p.setId(id);
+
+		Prodotto prodottoAggiornato = prodottoRepository.save(p);
+
+		return ProdottoDTO.fromProdotto(prodottoAggiornato);
 	}
 
 	@Override
-	public void eliminaProdotto() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'eliminaProdotto'");
+	public void eliminaProdotto(long id) {
+		prodottoRepository.deleteById(id);
 	}
 
 }
