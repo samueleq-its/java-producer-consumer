@@ -1,11 +1,11 @@
 package com.girque.services;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.girque.dto.FiltroDTO;
 import com.girque.dto.ProdottoDTO;
 import com.girque.dto.ProdottoRequestDTO;
+import com.girque.exception.ProdottoNotFoundException;
 
 public interface ProdottoService {
 
@@ -14,11 +14,11 @@ public interface ProdottoService {
 	 */
 	List<ProdottoDTO> trovaTutti(FiltroDTO filtro);
 
-	Optional<ProdottoDTO> trovaPerId(long id);
+	ProdottoDTO trovaPerId(long id) throws ProdottoNotFoundException;
 
 	ProdottoDTO creaProdotto(ProdottoRequestDTO pRequestDTO);
 
-	ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO);
+	ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO) throws ProdottoNotFoundException;
 
 	void eliminaProdotto(long id);
 }

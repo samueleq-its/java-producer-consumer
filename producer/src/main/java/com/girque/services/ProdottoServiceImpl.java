@@ -2,9 +2,8 @@ package com.girque.services;
 
 import com.girque.repos.ProdottoRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -12,6 +11,7 @@ import com.girque.dto.FiltroDTO;
 import com.girque.dto.ProdottoDTO;
 import com.girque.dto.ProdottoRequestDTO;
 import com.girque.entity.Prodotto;
+import com.girque.exception.ProdottoNotFoundException;
 
 @Service
 public class ProdottoServiceImpl implements ProdottoService {
@@ -34,35 +34,29 @@ public class ProdottoServiceImpl implements ProdottoService {
 	}
 
 	@Override
-	public Optional<ProdottoDTO> trovaPerId(long id) {
-		var p = prodottoRepository.findById(id);
+	public ProdottoDTO trovaPerId(long id) throws ProdottoNotFoundException {
+		Prodotto p = prodottoRepository.findById(id).orElseThrow(ProdottoNotFoundException::new);
 
-		Optional<ProdottoDTO> prodottoDTO;
-		try {
-			prodottoDTO = Optional.ofNullable(ProdottoDTO.fromProdotto(p.orElseThrow()));
-		} catch (NoSuchElementException e) {
-			prodottoDTO = Optional.empty();
-		}
+		ProdottoDTO pDto = ProdottoDTO.fromProdotto(p);
 
-		return prodottoDTO;
+		return pDto;
 	}
 
 	@Override
 	public ProdottoDTO creaProdotto(ProdottoRequestDTO pRequestDTO) {
 		Prodotto p = pRequestDTO.toProdotto();
+		p.setDataCreazione(LocalDateTime.now());
 		Prodotto nuovoProdotto = prodottoRepository.save(p);
 		return ProdottoDTO.fromProdotto(nuovoProdotto);
 	}
 
 	@Override
-	public ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO) {
-		if (prodottoRepository.findById(id).isEmpty()) {
-			// TODO come gestirlo?
-			return null;
-		}
+	public ProdottoDTO aggiornaProdotto(long id, ProdottoRequestDTO pRequestDTO) throws ProdottoNotFoundException {
+		Prodotto oldProdotto = prodottoRepository.findById(id).orElseThrow(ProdottoNotFoundException::new);
 
 		Prodotto p = pRequestDTO.toProdotto();
-		p.setId(id);
+		p.setId(oldProdotto.getId());
+		p.setDataCreazione(oldProdotto.getDataCreazione());
 
 		Prodotto prodottoAggiornato = prodottoRepository.save(p);
 
