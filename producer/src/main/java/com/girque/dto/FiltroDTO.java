@@ -1,12 +1,14 @@
 package com.girque.dto;
 
+import java.util.Comparator;
+
 import com.girque.entity.Prodotto;
 
 public record FiltroDTO(
 		String nome,
 		String categoria,
-		String sort,
-		String direction) {
+		SortCriteria sort,
+		Direction direction) implements Comparator<Prodotto> {
 
 	/**
 	 * Checks if a product matches the name and category filters, if they are
@@ -19,36 +21,16 @@ public record FiltroDTO(
 	/**
 	 * compares two products based on the sorting criteria and direction.
 	 */
+	@Override
 	public int compare(Prodotto p1, Prodotto p2) {
-		int result;
-		switch (sortTarget()) {
-			case ID:
-				result = p1.getId().compareTo(p2.getId());
-				break;
-			case NOME:
-				result = p1.getNome().compareTo(p2.getNome());
-				break;
-			case DESCRIZIONE:
-				result = p1.getDescrizione().compareTo(p2.getDescrizione());
-				break;
-			case PREZZO:
-				result = p1.getPrezzo().compareTo(p2.getPrezzo());
-				break;
-			case CATEGORIA:
-				result = p1.getCategoria().compareTo(p2.getCategoria());
-				break;
-			case QUANTITA:
-				result = p1.getQuantita() - p2.getQuantita();
-				break;
-			case DATACREAZIONE:
-				result = p1.getDataCreazione().compareTo(p2.getDataCreazione());
-				break;
-			case null:
-				result = 0;
-				break;
-		}
+		if (sort == null)
+			return 0;
 
-		return sortDirection() == Direction.ASC ? result : -result;
+		Comparator<Prodotto> comp = sort.getComparator();
+		if (direction == Direction.DESC) {
+			comp = comp.reversed();
+		}
+		return comp.compare(p1, p2);
 	}
 
 	private boolean nomeMatches(Prodotto p) {
@@ -60,27 +42,31 @@ public record FiltroDTO(
 				|| p.getCategoria().toLowerCase().contains(categoria.toLowerCase());
 	}
 
-	private SortTarget sortTarget() {
-		try {
-			return SortTarget.valueOf(sort.toUpperCase());
-		} catch (Exception e) {
-			return null;
-		}
-	}
+	private enum SortCriteria {
+		ID(Comparator.comparing(Prodotto::getId, Comparator.nullsLast(Comparator.naturalOrder()))),
+		NOME(Comparator.comparing(Prodotto::getNome, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))),
+		DESCRIZIONE(Comparator.comparing(Prodotto::getDescrizione,
+				Comparator.nullsLast(Comparator.naturalOrder()))),
+		PREZZO(Comparator.comparing(Prodotto::getPrezzo, Comparator.nullsLast(Comparator.naturalOrder()))),
+		CATEGORIA(Comparator.comparing(Prodotto::getCategoria,
+				Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))),
+		QUANTITA(Comparator.comparing(Prodotto::getQuantita, Comparator.nullsLast(Integer::compare))),
+		DATACREAZIONE(Comparator.comparing(Prodotto::getDataCreazione,
+				Comparator.nullsLast(Comparator.naturalOrder())));
 
-	private Direction sortDirection() {
-		try {
-			return Direction.valueOf(direction.toUpperCase());
-		} catch (Exception e) {
-			return Direction.ASC;
-		}
-	}
+		private final Comparator<Prodotto> comparator;
 
-	private enum SortTarget {
-		ID, NOME, DESCRIZIONE, PREZZO, CATEGORIA, QUANTITA, DATACREAZIONE;
+		SortCriteria(Comparator<Prodotto> comparator) {
+			this.comparator = comparator;
+		}
+
+		public Comparator<Prodotto> getComparator() {
+			return comparator;
+		}
 	}
 
 	private enum Direction {
-		ASC, DESC
+		ASC,
+		DESC;
 	}
 }
