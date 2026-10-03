@@ -28,7 +28,7 @@ public class ProdottoServiceImpl implements ProdottoService {
 		return prodottoRepository.findAll()
 				.stream()
 				.filter(filtro::matches)
-				.sorted(filtro::sort)
+				.sorted(filtro::compare)
 				.map(ProdottoDTO::fromProdotto)
 				.toList();
 	}

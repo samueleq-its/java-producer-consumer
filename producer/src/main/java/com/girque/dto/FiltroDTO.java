@@ -8,11 +8,18 @@ public record FiltroDTO(
 		String sort,
 		String direction) {
 
+	/**
+	 * Checks if a product matches the name and category filters, if they are
+	 * specified.
+	 */
 	public boolean matches(Prodotto p) {
 		return nomeMatches(p) && categoriaMatches(p);
 	}
 
-	public int sort(Prodotto p1, Prodotto p2) {
+	/**
+	 * compares two products based on the sorting criteria and direction.
+	 */
+	public int compare(Prodotto p1, Prodotto p2) {
 		int result;
 		switch (sortTarget()) {
 			case ID:

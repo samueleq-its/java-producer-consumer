@@ -9,6 +9,9 @@ import com.girque.dto.ProdottoRequestDTO;
 
 public interface ProdottoService {
 
+	/**
+	 * returns all products filtered and sorted according to the provided filter.
+	 */
 	List<ProdottoDTO> trovaTutti(FiltroDTO filtro);
 
 	Optional<ProdottoDTO> trovaPerId(long id);
