@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${prodotto.nome}">Dettaglio prodotto</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="dettaglio">
+    <h1 th:text="${prodotto.nome}">Nome prodotto</h1>
+
+    <div class="meta">
+        <div class="meta-item">
+            <span class="label">Categoria</span>
+            <span class="value">
+                <span class="badge"
+                      th:classappend="'badge-' + ${#strings.toLowerCase(#strings.replace(prodotto.categoria, ' ', '-'))}"
+                      th:text="${prodotto.categoria}">-</span>
+            </span>
+        </div>
+
+        <div class="meta-item">
+            <span class="label">Prezzo</span>
+            <span class="value prezzo"
+                  th:text="'€ ' + ${#numbers.formatDecimal(prodotto.prezzo, 1, 'POINT', 2, 'COMMA')}">€ 0,00</span>
+        </div>
+
+        <div class="meta-item">
+            <span class="label">Quantità disponibile</span>
+            <span class="value" th:text="${prodotto.quantita}">0</span>
+        </div>
+
+        <div class="meta-item">
+            <span class="label">Data creazione</span>
+            <span class="value"
+                  th:text="${#temporals.format(prodotto.dataCreazione, 'dd/MM/yyyy HH:mm')}">-</span>
+        </div>
+    </div>
+
+    <h3>Descrizione</h3>
+    <p class="descrizione" th:text="${prodotto.descrizione}">Descrizione...</p>
+
+    <div class="azioni">
+        <a th:href="@{/prodotti}" class="btn btn-secondary">Torna all'elenco</a>
+    </div>
+</div>
+
+</body>
+</html>

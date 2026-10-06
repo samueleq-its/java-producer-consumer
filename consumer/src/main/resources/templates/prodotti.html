@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elenco Prodotti</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<h1>Elenco Prodotti</h1>
+
+<!-- Contenitore errore (aggiornato via AJAX) -->
+<div id="erroreContainer">
+    <div th:if="${errore}" class="alert alert-error" th:text="${errore}"></div>
+</div>
+
+<!-- Form di ricerca: niente bottone, submit via AJAX -->
+<form th:action="@{/prodotti}" method="get" class="filtri" id="filtriForm">
+
+    <div class="field field-search">
+        <label for="nome">Cerca prodotto</label>
+        <div class="input-wrap">
+            <svg class="input-icon" viewBox="0 0 24 24" width="16" height="16"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="nome" name="nome"
+                   th:value="${nome}"
+                   placeholder="es. laptop"
+                   autocomplete="off">
+        </div>
+    </div>
+
+    <div class="field">
+        <label for="categoria">Categoria</label>
+        <select id="categoria" name="categoria">
+            <option value="">Tutte</option>
+            <option th:each="c : ${categorieDisponibili}"
+                    th:value="${c}" th:text="${c}"
+                    th:selected="${c == categoria}">Categoria</option>
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="sort">Ordina per</label>
+        <select id="sort" name="sort">
+            <option value="">--</option>
+            <option value="prezzo" th:selected="${sort == 'prezzo'}">Prezzo</option>
+            <option value="nome"   th:selected="${sort == 'nome'}">Nome</option>
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="direction">Direzione</label>
+        <select id="direction" name="direction">
+            <option value="asc"  th:selected="${direction == 'asc'}">Crescente</option>
+            <option value="desc" th:selected="${direction == 'desc'}">Decrescente</option>
+        </select>
+    </div>
+
+</form>
+
+<!-- Chip filtri attivi (aggiornati via AJAX) -->
+<div id="chipContainer">
+    <div class="active-filters"
+         th:if="${!#strings.isEmpty(nome) or !#strings.isEmpty(categoria)}">
+
+        <span class="active-filters-label">Filtri attivi:</span>
+
+        <span class="chip"
+              th:if="${!#strings.isEmpty(nome)}"
+              th:text="'Nome: ' + ${nome}"></span>
+
+        <span class="chip"
+              th:if="${!#strings.isEmpty(categoria)}"
+              th:text="'Categoria: ' + ${categoria}"></span>
+
+        <a th:href="@{/prodotti}" class="chip chip-clear" id="clearLink">Rimuovi filtri</a>
+    </div>
+</div>
+
+<!-- Tabella (aggiornata via AJAX) -->
+<div id="tabellaContainer">
+    <div class="table-wrapper">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Prezzo</th>
+                <th>Quantità</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(prodotti)}">
+                <td colspan="6" class="empty">Nessun prodotto trovato.</td>
+            </tr>
+            <tr th:each="p : ${prodotti}">
+                <td class="col-id" th:text="${p.id}">1</td>
+                <td class="col-nome" th:text="${p.nome}">Nome</td>
+                <td>
+                        <span class="badge"
+                              th:classappend="'badge-' + ${#strings.toLowerCase(#strings.replace(p.categoria, ' ', '-'))}"
+                              th:text="${p.categoria}">Categoria</span>
+                </td>
+                <td class="col-prezzo"
+                    th:text="'€ ' + ${#numbers.formatDecimal(p.prezzo, 1, 'POINT', 2, 'COMMA')}">€ 0,00</td>
+                <td class="col-qta" th:text="${p.quantita}">0</td>
+                <td class="col-azioni">
+                    <a th:href="@{/prodotti/{id}(id=${p.id})}"
+                       class="btn btn-info btn-sm">Dettaglio</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Overlay di caricamento -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Aggiornamento in corso</p>
+</div>
+
+<script>
+    (function () {
+        const form      = document.getElementById('filtriForm');
+        const inputNome = document.getElementById('nome');
+        const overlay   = document.getElementById('loadingOverlay');
+        const selects   = form.querySelectorAll('select');
+
+        let debounceTimer = null;
+        let richiestaInCorso = null; // per abortire richieste vecchie
+
+        // Costruisce l'URL con i parametri del form (esclude i vuoti)
+        function buildUrl() {
+            const params = new URLSearchParams(new FormData(form));
+            const clean = new URLSearchParams();
+            for (const [k, v] of params.entries()) {
+                if (v && v.trim() !== '') clean.set(k, v);
+            }
+            const qs = clean.toString();
+            return form.getAttribute('action') + (qs ? '?' + qs : '');
+        }
+
+        // Aggiorna solo le parti dinamiche della pagina via fetch
+        async function aggiorna() {
+            const url = buildUrl();
+
+            // Annulla la richiesta precedente se ancora in corso
+            if (richiestaInCorso) richiestaInCorso.abort();
+
+            const controller = new AbortController();
+            richiestaInCorso = controller;
+
+            overlay.classList.add('visible');
+
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                const html = await res.text();
+
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+
+                // Sostituisci tabella
+                const nuovaTabella = doc.getElementById('tabellaContainer');
+                document.getElementById('tabellaContainer').replaceWith(nuovaTabella);
+
+                // Sostituisci chip filtri
+                const nuoviChip = doc.getElementById('chipContainer');
+                document.getElementById('chipContainer').replaceWith(nuoviChip);
+
+                // Sostituisci eventuale errore
+                const nuovoErrore = doc.getElementById('erroreContainer');
+                document.getElementById('erroreContainer').replaceWith(nuovoErrore);
+
+                // Aggiorna URL nel browser (senza ricaricare)
+                history.replaceState(null, '', url);
+
+                // Mantieni il focus sull'input se stavi scrivendo
+                if (document.activeElement === inputNome || inputNome.value !== '') {
+                    // il focus non è mai stato perso, ma per sicurezza:
+                    if (document.activeElement !== inputNome) {
+                        // non forziamo il focus se l'utente stava usando le tendine
+                    }
+                }
+
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    console.error('Errore durante l\'aggiornamento:', e);
+                }
+            } finally {
+                if (richiestaInCorso === controller) {
+                    overlay.classList.remove('visible');
+                    richiestaInCorso = null;
+                }
+            }
+        }
+
+        // ── Testo: debounce 400ms (aggiorna mentre scrivi, ma con calma)
+        inputNome.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(aggiorna, 400);
+        });
+
+        // Invio → aggiorna subito
+        inputNome.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(debounceTimer);
+                aggiorna();
+            }
+        });
+
+        // Tendine → aggiorna subito
+        selects.forEach(sel => sel.addEventListener('change', aggiorna));
+
+        // Link "Rimuovi filtri" → intercetta il click e aggiorna via AJAX
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'clearLink') {
+                e.preventDefault();
+                inputNome.value = '';
+                document.getElementById('categoria').value = '';
+                document.getElementById('sort').value = '';
+                document.getElementById('direction').value = 'asc';
+                aggiorna();
+            }
+        });
+    })();
+</script>
+
+</body>
+</html>

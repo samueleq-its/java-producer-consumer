@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Errore</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="error-page">
+
+    <div class="error-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="56" height="56"
+             fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9"  x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+    </div>
+
+    <h1 class="error-title">Si è verificato un errore</h1>
+
+    <p class="error-message" th:text="${errore}">
+        Il servizio API non è attualmente disponibile.
+    </p>
+
+    <div class="error-actions">
+        <a th:href="@{/prodotti}" class="btn btn-primary">Torna all'elenco</a>
+        <a th:href="@{/prodotti}" class="btn btn-secondary"
+           onclick="location.reload(); return false;">Riprova</a>
+    </div>
+
+    <p class="error-hint">
+        Se il problema persiste, verificare che la Producer Application
+        sia in esecuzione su <code>http://localhost:8081</code>.
+    </p>
+
+</div>
+
+</body>
+</html>
