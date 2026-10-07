@@ -1,0 +1,13 @@
+ricerca per categoria, nome, ordinamento in repository
+spring security su post put delete
+
+container per producer
+container per sql
+comunicazione attraverso rete docker
+dati mySql sono persistenti (rimuovere rest DB all'avvio)
+immagini su dockerHub
+
+utilizzare variabili di ambiente invece di properties statiche
+es: spring.datasource.url=${SPRING_DATASOURCE_URL}
+
+dockerfile
