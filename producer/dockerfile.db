@@ -1,0 +1,7 @@
+FROM mysql:9.7
+
+ENV MYSQL_DATABASE=esercitazione_api
+ENV MYSQL_ROOT_PASSWORD=root
+
+# tabelle persistenti
+VOLUME /var/lib/mysql

@@ -9,6 +9,8 @@ RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:resolve-plugins depend
 COPY src src
 RUN --mount=type=cache,target=/root/.m2 ./mvnw package -DskipTests
 
+# opzioni più leggere
+# eclipse-temurin:21-jre-alpine or [mcr.microsoft.com/openjdk/jdk:21-distroless](https://mcr.microsoft.com/openjdk/jdk:21-distroless)
 FROM mcr.microsoft.com/openjdk/jdk:21-ubuntu
 WORKDIR /producer
 
