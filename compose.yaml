@@ -1,0 +1,55 @@
+service:
+  mysqldb:
+    image: mysql:9.7
+    restart: unless-stopped
+    container_name: mysqldb
+    environment:
+      - MYSQL_ROOT_PASSWORD = root
+      - MYSQL_DATABASE = esercitazione_api
+    ports:
+      - 3306:3305
+    volumes:
+      - mysqldb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  producer:
+    build: ./producer
+    restart: on-failure
+    container_name: producer
+    depends_on:
+      mysqldb:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3305/esercitazione_api
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    ports:
+      - 8081:8081
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  consumer:
+    build: ./consumer
+    restart: on-failure
+    container_name: consumer
+    depends_on:
+      producer:
+        condition: service_healthy
+    ports:
+      - 8082:8082
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  volumes:
+    mysqldb:
+      driver: local

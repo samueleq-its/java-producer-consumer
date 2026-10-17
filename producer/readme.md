@@ -1,6 +1,6 @@
 # COLLABORATORI
 Nicole Girardi
-Querio Samuele
+Samuele Querio
 AI: Gemini
 
 # DESCRIZIONE
