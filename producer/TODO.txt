@@ -1,15 +1,16 @@
 	ricerca per categoria, nome, ordinamento in repository
-	spring security su post put delete
+OK	spring security su post put delete
 
 OK	container per producer
 OK	container per sql
-	comunicazione attraverso rete docker
+OK	comunicazione attraverso rete docker
 	dati mySql sono persistenti (rimuovere reset DB all'avvio), deve essere inizializzato solo una volta
 	immagini su dockerHub
 
-	utilizzare variabili di ambiente invece di properties statiche
-	es: spring.datasource.url=${SPRING_DATASOURCE_URL}
+OK	utilizzare variabili di ambiente invece di properties statiche
 
-	dockerfile
+OK?	dockerfile
 
-	healthcheck
+OK	healthcheck
+
+	readme
