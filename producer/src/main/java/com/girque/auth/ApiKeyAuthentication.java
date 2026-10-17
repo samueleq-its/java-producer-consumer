@@ -1,0 +1,29 @@
+package com.girque.auth;
+
+import java.util.Collection;
+
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+
+public class ApiKeyAuthentication extends AbstractAuthenticationToken {
+
+	private final String apiKey;
+
+	public ApiKeyAuthentication(String apiKey, Collection<? extends GrantedAuthority> authorities) {
+		super(authorities);
+		this.apiKey = apiKey;
+		setAuthenticated(true);
+	}
+
+	@Override
+	public @Nullable Object getCredentials() {
+		return null;
+	}
+
+	@Override
+	public @Nullable Object getPrincipal() {
+		return apiKey;
+	}
+
+}

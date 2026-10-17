@@ -11,11 +11,11 @@ service:
     volumes:
       - mysqldb:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   producer:
     build: ./producer
     restart: on-failure
@@ -27,10 +27,12 @@ service:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3305/esercitazione_api
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_SECURITY_ENABLE=true
+      - SPRING_SECURITY_API_KEY=189f81e6-13ed-4ec2-8a5b-506fa9cf47e9
     ports:
       - 8081:8081
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,11 +47,11 @@ service:
     ports:
       - 8082:8082
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8082/actuator/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   volumes:
     mysqldb:
       driver: local

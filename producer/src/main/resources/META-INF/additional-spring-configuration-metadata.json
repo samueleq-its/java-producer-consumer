@@ -1,0 +1,14 @@
+{
+	"properties": [
+		{
+			"name": "security.enabled",
+			"type": "java.lang.Boolean",
+			"description": "enable/disable spring security"
+		},
+		{
+			"name": "security.api-key",
+			"type": "java.lang.String",
+			"description": "api key for POST/PUT/DELETE requests"
+		}
+	]
+}
