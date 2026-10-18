@@ -1,13 +1,13 @@
-service:
+services:
   mysqldb:
     image: mysql:9.7
     restart: unless-stopped
     container_name: mysqldb
     environment:
-      - MYSQL_ROOT_PASSWORD = root
-      - MYSQL_DATABASE = esercitazione_api
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=esercitazione_api
     ports:
-      - 3306:3305
+      - 3305:3306
     volumes:
       - mysqldb:/var/lib/mysql
     healthcheck:
@@ -24,7 +24,7 @@ service:
       mysqldb:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3305/esercitazione_api
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/esercitazione_api
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_SECURITY_ENABLE=true
@@ -38,12 +38,17 @@ service:
       retries: 5
 
   consumer:
-    build: ./consumer
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
     restart: on-failure
     container_name: consumer
     depends_on:
       producer:
         condition: service_healthy
+    environment:
+      - API_BASE_URL=http://producer:8081/api
+      - API_KEY=189f81e6-13ed-4ec2-8a5b-506fa9cf47e9
     ports:
       - 8082:8082
     healthcheck:
@@ -52,6 +57,6 @@ service:
       timeout: 5s
       retries: 5
 
-  volumes:
-    mysqldb:
-      driver: local
+volumes:
+  mysqldb:
+    driver: local

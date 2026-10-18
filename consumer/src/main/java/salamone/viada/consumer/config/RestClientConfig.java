@@ -9,9 +9,11 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
     @Bean
-    public RestClient prodottoRestClient(@Value("${api.base-url}") String baseUrl) {
+    public RestClient prodottoRestClient(@Value("${api.base-url}") String baseUrl,
+                                         @Value("${api.key}") String apiKey) {
         return RestClient.builder()
                 .baseUrl(baseUrl)
+                .defaultHeader("X-API-KEY", apiKey)
                 .build();
     }
 }
