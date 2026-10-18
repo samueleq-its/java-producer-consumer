@@ -10,6 +10,7 @@ services:
       - 3305:3306
     volumes:
       - mysqldb:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
       interval: 10s
@@ -27,6 +28,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/esercitazione_api
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_SQL_INIT_MODE=never
       - SPRING_SECURITY_ENABLE=true
       - SPRING_SECURITY_API_KEY=189f81e6-13ed-4ec2-8a5b-506fa9cf47e9
     ports:
