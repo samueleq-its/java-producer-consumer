@@ -11,6 +11,7 @@
 | **Sviluppatore** | Mattia Viada |
 | **Sviluppatore** | Samuele Querio |
 | **Sviluppatore** | Nicole Girardi |
+
 ### Supporto e Strumenti AI
 - **Claude:** 10%
 - **DeepSeek:** 30%
@@ -22,10 +23,10 @@
 
 Il sistema è composto da due applicazioni **Spring Boot** indipendenti che comunicano tramite **REST API**, con persistenza su database **MySQL**:
 
-1. **Producer Application (`product-api`, `:8081`):** Espone le REST API per il CRUD dei prodotti e gestisce la persistenza dei dati su MySQL tramite Spring Data JPA. Le operazioni di scrittura (POST, PUT, DELETE) sono protette tramite API Key gestita con Spring Security.
-2. **Consumer Application (`product-client`, `:8082`):** Interfaccia web sviluppata con Thymeleaf che consuma i dati esclusivamente interrogando le REST API del Producer tramite `RestClient`, senza mai accedere direttamente al database.
+1. **Producer (`product-api`, porta `8081`):** espone le REST API per il CRUD dei prodotti e gestisce la persistenza su MySQL tramite Spring Data JPA. Le operazioni di scrittura (`POST`, `PUT`, `DELETE`) sono protette da una **API Key** gestita con Spring Security.
+2. **Consumer (`consumer`, porta `8082`):** interfaccia web Thymeleaf che ottiene i dati esclusivamente interrogando le REST API del Producer tramite `RestClient`, senza mai accedere al database. Il Consumer è in sola lettura (elenco e dettaglio prodotti).
 
-Il progetto include il supporto completo a **Docker** e **Docker Compose** per l'orchestratore multi-container e la pubblicazione su **Docker Hub**.
+Il progetto è completamente containerizzato: un singolo `docker compose up` avvia database, Producer e Consumer.
 
 ### Architettura del Sistema
 
@@ -42,6 +43,7 @@ Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──JDBC/JPA──▶ M
 .
 ├── compose.yaml
 ├── init.sql
+├── .dockerignore
 ├── consumer/
 │   ├── Dockerfile
 │   ├── pom.xml
@@ -60,7 +62,10 @@ Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──JDBC/JPA──▶ M
 │
 └── producer/
     ├── Dockerfile
+    ├── dockerfile.db          (Dockerfile alternativo per MySQL, non usato da compose.yaml)
     ├── pom.xml
+    ├── readme.md              (documentazione specifica del Producer)
+    ├── TODO.txt
     └── src/main/
         ├── java/com/girque/
         │   ├── ProducerApplication.java
@@ -87,170 +92,171 @@ Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──JDBC/JPA──▶ M
 | **Linguaggio** | Java 21 |
 | **Framework Base** | Spring Boot 4.1.1 |
 | **Web & REST** | Spring Web MVC |
-| **Persistenza & DB** | Spring Data JPA, Hibernate, MySQL 8 |
-| **Sicurezza Producer** | Spring Security (Autenticazione basata su API Key) |
+| **Persistenza & DB** | Spring Data JPA, Hibernate, MySQL (immagine Docker `mysql:9.7`), MySQL Connector/J |
+| **Sicurezza Producer** | Spring Security (autenticazione stateless via API Key) |
+| **Health check** | Spring Boot Actuator (`/actuator/health` su Producer e Consumer) |
 | **HTTP Client (Consumer)** | Spring `RestClient` |
 | **Template Engine** | Thymeleaf |
-| **Utility** | Lombok |
-| **Build System** | Apache Maven |
-| **Containerizzazione** | Docker, Docker Compose |
+| **Utility** | Lombok (usato nel Consumer) |
+| **Build System** | Apache Maven (wrapper `mvnw` incluso) |
+| **Containerizzazione** | Docker, Docker Compose (build multi-stage) |
 
 ---
 
 ## 📌 Requisiti Necessari
 
 ### Esecuzione in Locale
-- **Java Development Kit (JDK):** Versione 21
-- **Build Tool:** Maven 3.9+ (oppure l'eseguibile incluso `./mvnw`)
-- **Database:** MySQL 8 attivo su `localhost:3306`
+- **JDK 21**
+- **Maven:** si usa il wrapper incluso (`./mvnw`, su Windows `mvnw.cmd`)
+- **MySQL** attivo su `localhost:3306` con credenziali `root` / `root` (modificabili tramite variabili d'ambiente, vedi sotto)
 
 ### Esecuzione in Docker
-- **Engine:** Docker Engine / Docker Desktop
-- **Orchestratore:** Docker Compose
+- Docker Engine / Docker Desktop con Docker Compose
+
 ---
 
-## 🗄 Configurazione MySQL
+## 🗄 Database e Inizializzazione Dati
 
-Per l'esecuzione locale, creare il database eseguendo lo script seguente:
+Il comportamento cambia a seconda dell'ambiente.
+
+### Ambiente Locale
+Serve solo che esista il database vuoto:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS esercitazione_api
 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE esercitazione_api;
-
-CREATE TABLE prodotti (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(200) NOT NULL,
-    descrizione TEXT,
-    prezzo DECIMAL(10,2) NOT NULL,
-    categoria VARCHAR(100) NOT NULL,
-    quantita INT NOT NULL DEFAULT 0,
-    data_creazione TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
 ```
 
-- **Ambiente Locale:** I 20 prodotti di prova vengono caricati automaticamente all'avvio dal file `producer/src/main/resources/data.sql`.
-- **Ambiente Docker:** Il DB viene inizializzato tramite lo script `init.sql` e lo schema della tabella viene gestito da Hibernate via `spring.jpa.hibernate.ddl-auto=update`.
+Con la configurazione di default (`spring.jpa.hibernate.ddl-auto=create`) Hibernate **ricrea la tabella `prodotti` ad ogni avvio** e `data.sql` ricarica i 20 prodotti di prova. Di conseguenza in locale i dati vengono **sempre riportati allo stato iniziale** a ogni riavvio del Producer.
+
+### Ambiente Docker
+- Il container MySQL esegue `init.sql` (montato in `/docker-entrypoint-initdb.d`) **solo al primo avvio**, quando il volume è vuoto: crea database e tabella e inserisce i 20 prodotti di prova.
+- Il Producer parte con `SPRING_JPA_HIBERNATE_DDL_AUTO=update` e `SPRING_SQL_INIT_MODE=never`: non ricrea lo schema e non ricarica `data.sql`.
+- I dati sono **persistenti** tra un riavvio e l'altro grazie al volume Docker `mysqldb`. Per ripartire da zero: `docker compose down -v`.
+- Il MySQL del container è esposto sulla porta **3305** dell'host (internamente resta 3306), così non entra in conflitto con un eventuale MySQL locale sulla 3306.
 
 ---
 
-## ⚙️ Configurazione della Producer Application (`product-api`)
+## ⚙️ Configurazione
 
-File: `producer/src/main/resources/application.properties`
+Tutte le impostazioni sensibili all'ambiente sono variabili d'ambiente con un valore di default adatto al test in locale: nessuna modifica al codice è necessaria per passare da locale a Docker.
 
-```properties
-spring.application.name=product-api
-server.port=8081
+### Producer – `producer/src/main/resources/application.properties`
 
-# Connessione al Database
-spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/esercitazione_api}
-spring.datasource.username=${SPRING_DATASOURCE_USERNAME:root}
-spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:root}
+| Variabile d'ambiente | Default | Descrizione |
+| :--- | :--- | :--- |
+| `SPRING_DATASOURCE_URL` | `jdbc:mysql://localhost:3306/esercitazione_api` | URL JDBC |
+| `SPRING_DATASOURCE_USERNAME` | `root` | Utente DB |
+| `SPRING_DATASOURCE_PASSWORD` | `root` | Password DB |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO` | `create` | Strategia schema Hibernate (in Docker: `update`) |
+| `SPRING_SQL_INIT_MODE` | `always` | Esecuzione di `data.sql` (in Docker: `never`) |
+| `SPRING_SECURITY_ENABLE` | `true` | Abilita/disabilita la protezione delle scritture (`security.enabled`) |
+| `SPRING_SECURITY_API_KEY` | `12345678` | API Key attesa (`security.api-key`) |
 
-# Configurazione JPA / Hibernate
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
+Altre impostazioni: `server.port=8081`, `spring.application.name=product-api`, `spring.jpa.defer-datasource-initialization=true` (esegue `data.sql` dopo la creazione delle tabelle), `spring.sql.init.continue-on-error=true`.
 
-# Sicurezza API Key
-api.key=${API_KEY:default-secret-key}
-```
+### Consumer – `consumer/src/main/resources/application.properties`
 
-> **Architettura interna Producer:**
-> Il Producer è organizzato secondo un'architettura a livelli ben definita:
-> **Controller** ──▶ **Service** (Interfaccia + Implementation) ──▶ **Repository** ──▶ **Entity** ──▶ **MySQL**
+| Variabile d'ambiente | Default | Descrizione |
+| :--- | :--- | :--- |
+| `API_BASE_URL` | `http://localhost:8081/api` | URL base delle API del Producer |
+| `API_KEY` | `12345678` | API Key inviata nell'header `X-API-KEY` |
 
----
+Altre impostazioni: `server.port=8082`, `spring.application.name=consumer`, `spring.thymeleaf.cache=false`.
 
-## ⚙️ Configurazione della Consumer Application (`product-client`)
+> **Integrazione degli ambienti:** in Docker, `compose.yaml` imposta `API_BASE_URL=http://producer:8081/api` (il nome del servizio compose fa da hostname sulla rete interna) e la stessa API Key su Producer e Consumer.
 
-File: `consumer/src/main/resources/application.properties`
+> **Nota di sicurezza:** `compose.yaml` contiene un'API Key di esempio (UUID) scritta in chiaro, e le credenziali DB `root`/`root`. Vanno bene per l'esercitazione, ma in un contesto reale devono stare in un file `.env` o in un secret manager.
 
-```properties
-spring.application.name=product-client
-server.port=8082
+### Architettura interna del Producer
 
-# URL Base delle REST API del Producer
-api.base-url=${PRODUCER_URL:http://localhost:8081}/api
-api.key=${API_KEY:default-secret-key}
+**Controller** ──▶ **Service** (interfaccia + implementazione) ──▶ **Repository** ──▶ **Entity** ──▶ **MySQL**
 
-# Disabilitazione cache Thymeleaf per sviluppo
-spring.thymeleaf.cache=false
-```
-
-> **Integrazione degli Ambienti:**
-> - In **Locale**: `PRODUCER_URL` assume il valore di default `http://localhost:8081`.
-> - In **Docker**: `PRODUCER_URL` viene sovrascritta con `http://producer:8081` mediante le variabili d'ambiente di Docker Compose, senza richiedere alcuna modifica al codice sorgente.
+Filtri e ordinamento sono applicati nel `ProdottoServiceImpl`: carica i prodotti con `findAll()` e applica `FiltroDTO` (che funge sia da predicato di filtro sia da `Comparator`) con gli stream Java.
 
 ---
 
 ## 🔐 Autenticazione (Producer)
 
-Le operazioni di lettura sulle API del Producer sono pubbliche, mentre le operazioni di scrittura richiedono un'autenticazione tramite **API Key**.
+Le letture sono pubbliche, le scritture richiedono una API Key valida.
 
-| Metodo HTTP | Endpoint | Accesso / Auth |
+| Metodo HTTP | Endpoint | Accesso |
 | :--- | :--- | :--- |
-| `GET` | `/api/prodotti` | **Pubblica** |
-| `GET` | `/api/prodotti/{id}` | **Pubblica** |
+| `GET` | `/api/prodotti` | Pubblico |
+| `GET` | `/api/prodotti/{id}` | Pubblico |
+| `GET` | `/actuator/health` | Pubblico (usato dagli healthcheck Docker) |
 | `POST` | `/api/prodotti` | **API Key richiesta** |
 | `PUT` | `/api/prodotti/{id}` | **API Key richiesta** |
 | `DELETE` | `/api/prodotti/{id}` | **API Key richiesta** |
 
-- **Header Custom:** `X-API-KEY: <valore>`
-- **Configurazione:** Il valore atteso dell'API Key è configurabile sia tramite la proprietà `api.key` che tramite la variabile d'ambiente `API_KEY`.
+- **Header:** `X-API-KEY: <valore>`
+- **Implementazione:** `AuthFilter` (filtro `OncePerRequestFilter`, sessione stateless, CSRF disabilitato) confronta l'header con il valore di `security.api-key`; `SecurityConfig` richiede l'autenticazione per `POST`/`PUT`/`DELETE` e lascia tutto il resto pubblico.
+- **Disattivazione:** impostando `SPRING_SECURITY_ENABLE=false` la protezione viene disabilitata (utile per test rapidi).
+- Il Consumer invia l'header `X-API-KEY` in ogni richiesta, anche se oggi esegue solo letture.
+
+Esempio:
+
+```bash
+curl -X POST http://localhost:8081/api/prodotti \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: 12345678" \
+  -d '{"nome":"Laptop Pro 15","descrizione":"Notebook professionale","prezzo":1299.90,"categoria":"Informatica","quantita":15}'
+```
 
 ---
 
 ## 🚀 Istruzioni per l'Avvio
 
-### 1. Avvio in Locale
+### 1. Avvio tramite Docker Compose (consigliato)
 
-Aprire due terminali distinti per avviare i due microservizi.
-
-**Terminale 1 — Producer Application:**
-```bash
-cd producer
-./mvnw clean package
-./mvnw spring-boot:run
-```
-*Endpoint Producer:* `http://localhost:8081/api/prodotti`
-
-**Terminale 2 — Consumer Application:**
-```bash
-cd consumer
-./mvnw clean package
-./mvnw spring-boot:run
-```
-*Interfaccia Web Consumer:* `http://localhost:8082/prodotti`
-
----
-
-### 2. Avvio tramite Docker Compose
-
-Dalla root principale del progetto, eseguire:
+Dalla root del progetto:
 
 ```bash
-# Build e avvio di tutti i container (DB, Producer, Consumer)
 docker compose up --build
-
-# Verificare lo stato dei container in esecuzione
 docker ps
 ```
 
 Container creati:
-- `esercitazione-db` (Porta `3306`)
-- `esercitazione-producer` (Porta `8081`)
-- `esercitazione-consumer` (Porta `8082`)
 
-**Comandi Docker utili:**
+| Container | Servizio | Porta host |
+| :--- | :--- | :--- |
+| `mysqldb` | MySQL | `3305` |
+| `producer` | Producer API | `8081` |
+| `consumer` | Consumer web | `8082` |
+
+Ordine di avvio garantito dagli healthcheck: `mysqldb` (mysqladmin ping) → `producer` (`/actuator/health`) → `consumer` (`/actuator/health`). Producer e Consumer hanno `restart: on-failure`, il database `unless-stopped`.
+
+Comandi utili:
+
 ```bash
-docker compose up -d           # Avvio in background (detached)
-docker compose stop            # Arresta i container senza rimuoverli
-docker compose down            # Arresta e rimuove container e reti
-docker compose down -v         # Rimuove container, reti e anche il volume dei dati MySQL
-docker compose logs -f         # Visualizza i log in tempo reale di tutti i servizi
+docker compose up -d           # avvio in background
+docker compose stop            # ferma i container senza rimuoverli
+docker compose down            # ferma e rimuove container e rete
+docker compose down -v         # rimuove anche il volume dei dati MySQL
+docker compose logs -f         # log in tempo reale
 ```
+
+### 2. Avvio in Locale
+
+Prerequisiti: MySQL su `localhost:3306` con il database `esercitazione_api` già creato (vedi sopra). Aprire due terminali.
+
+**Terminale 1 – Producer:**
+```bash
+cd producer
+./mvnw spring-boot:run
+```
+Endpoint: `http://localhost:8081/api/prodotti`
+
+**Terminale 2 – Consumer** (dopo che il Producer è partito):
+```bash
+cd consumer
+./mvnw spring-boot:run
+```
+Interfaccia web: `http://localhost:8082/prodotti`
+
+Su Windows usare `mvnw.cmd` al posto di `./mvnw`.
+
+> Se si usa `./mvnw package` (o `clean package`) nel Producer, il test `ProducerApplicationTests` carica l'intero contesto Spring e quindi **richiede MySQL attivo**; in alternativa aggiungere `-DskipTests` (come fanno i Dockerfile).
 
 ---
 
@@ -258,31 +264,45 @@ docker compose logs -f         # Visualizza i log in tempo reale di tutti i serv
 
 **Base URL:** `http://localhost:8081/api/prodotti`
 
-### Operations CRUD
+### Operazioni CRUD
 
-| Metodo | Endpoint | Codici HTTP Response | Auth |
+| Metodo | Endpoint | Risposta | Auth |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/prodotti` | `200 OK` | Pubblica |
 | `GET` | `/api/prodotti/{id}` | `200 OK` / `404 Not Found` | Pubblica |
 | `POST` | `/api/prodotti` | `201 Created` | API Key |
 | `PUT` | `/api/prodotti/{id}` | `200 OK` / `404 Not Found` | API Key |
-| `DELETE` | `/api/prodotti/{id}` | `204 No Content` / `404 Not Found` | API Key |
+| `DELETE` | `/api/prodotti/{id}` | `200 OK` (corpo vuoto) | API Key |
+
+Note:
+- `POST` e `PUT` accettano un `ProdottoRequestDTO` (`nome`, `descrizione`, `prezzo`, `categoria`, `quantita`); `id` e `dataCreazione` sono assegnati dal server (in `PUT` la data di creazione originale viene mantenuta).
+- `DELETE` non verifica l'esistenza del prodotto: restituisce `200 OK` anche se l'id non esiste (nessun `404`).
+- Un body JSON malformato produce `400 Bad Request`.
 
 ### Filtri, Ricerca e Ordinamento
 
-I parametri di richiesta vengono mappati nell'oggetto `FiltroDTO` gestito dal controller tramite `@RequestParam`:
+I parametri di query di `GET /api/prodotti` sono mappati su `FiltroDTO`:
+
+| Parametro | Valori | Comportamento |
+| :--- | :--- | :--- |
+| `nome` | testo | Ricerca *contiene*, case-insensitive, sul nome |
+| `categoria` | testo | Ricerca *contiene*, case-insensitive, sulla categoria |
+| `sort` | `id`, `nome`, `descrizione`, `prezzo`, `categoria`, `quantita`, `datacreazione` | Campo di ordinamento. Se omesso, nessun ordinamento (ordine del DB) |
+| `direction` | `asc` (default), `desc` | Direzione; ha effetto solo se `sort` è presente |
+
+Esempi:
 
 | Endpoint | Descrizione |
 | :--- | :--- |
-| `/api/prodotti?categoria=Informatica` | Filtra i prodotti per categoria esatta |
-| `/api/prodotti?nome=laptop` | Ricerca case-insensitive sul nome del prodotto |
-| `/api/prodotti?sort=prezzo` | Ordina i prodotti per prezzo (crescente di default) |
-| `/api/prodotti?sort=prezzo&direction=desc` | Ordina i prodotti per prezzo decrescente |
-| `/api/prodotti?categoria=Accessori&sort=prezzo&direction=asc` | Combinazione di filtri e ordinamento |
+| `/api/prodotti?categoria=Informatica` | Prodotti della categoria Informatica |
+| `/api/prodotti?nome=laptop` | Ricerca per nome |
+| `/api/prodotti?sort=prezzo` | Per prezzo crescente |
+| `/api/prodotti?sort=prezzo&direction=desc` | Per prezzo decrescente |
+| `/api/prodotti?categoria=Accessori&sort=prezzo&direction=asc` | Filtro + ordinamento |
 
 ### Gestione Errori Centralizzata
 
-Le eccezioni vengono gestite da `@RestControllerAdvice` (`GlobalExceptionHandler`), che restituisce una struttura JSON standardizzata:
+`GlobalExceptionHandler` (`@RestControllerAdvice`) restituisce un JSON standard per `ProdottoNotFoundException` (404) e per i body non leggibili (400):
 
 ```json
 {
@@ -296,24 +316,39 @@ Le eccezioni vengono gestite da `@RestControllerAdvice` (`GlobalExceptionHandler
 
 ## 💻 Pagine e Routing (Consumer)
 
-| URL | Descrizione Interfaccia |
+| URL | Descrizione |
 | :--- | :--- |
-| `http://localhost:8082/prodotti` | Tabella dinamica prodotti con ricerca, filtro categoria e ordinamento |
-| `http://localhost:8082/prodotti/{id}` | Vista di dettaglio completa del singolo prodotto |
+| `http://localhost:8082/prodotti` | Tabella prodotti con ricerca per nome, filtro categoria e ordinamento (prezzo / nome, crescente / decrescente) |
+| `http://localhost:8082/prodotti/{id}` | Dettaglio del prodotto (categoria, prezzo, quantità, data di creazione, descrizione) |
+
+La root `/` non è mappata: usare direttamente `/prodotti`. Se l'id richiesto non esiste si viene riportati all'elenco con un messaggio d'errore; se il Producer non è raggiungibile viene mostrato un messaggio nell'elenco (o la pagina `error.html` dal dettaglio).
+
+L'elenco delle categorie nel filtro è definito nel `ProdottoWebController` (Informatica, Accessori, Audio, Storage, Mobile, Wearable, Networking, Ufficio).
 
 ---
 
-## ✨ Funzionalità Aggiuntive Implementate
+## ✨ Funzionalità Implementate
 
-- **Protezione con Spring Security:** Autenticazione basata su API Key personalizzata per separare le operazioni pubbliche (lettura) da quelle protette (scrittura).
-- **Pattern DTO (Data Transfer Object):** Separazione netta tra il dominio e l'API. Utilizzo di `ProdottoDTO`, `ProdottoRequestDTO` e `FiltroDTO` sia sul Producer che sul Consumer. Le entità del DB non vengono mai esposte all'esterno.
-- **Disaccoppiamento tramite Service Layer:** Implementazione del pattern `ProdottoService` (interfaccia) e `ProdottoServiceImpl` (implementazione).
-- **UX Reattiva e Fluidità AJAX (Client-side):**
-  - **Auto-submit con Debounce:** Filtraggio automatico dei dati con un delay di 350ms sulla digitazione e applicazione immediata sulle sezioni `<select>`.
-  - **Aggiornamento AJAX dinamico:** Ricaricamento parziale della tabella dei prodotti senza refresh della pagina, preservando lo stato del cursore e il focus dell'input.
-  - **AbortController JS:** Cancellazione automatica delle richieste HTTP pendenti o obsolete durante la digitazione rapida.
-  - **Sincronizzazione URL (`history.replaceState`):** Mantiene gli argomenti di ricerca e i filtri sempre sincronizzati con l'URL per consentire il bookmarking o la condivisione del link.
-- **Interfaccia Utente Curata:** CSS custom responsive, badge visivi per le categorie, overlay di caricamento con spinner e icone SVG inline.
-- **Robustezza ed Error Handling:** Gestione elegante delle disconnessioni: messaggio di errore dedicato nella UI Consumer qualora il Producer risulti irraggiungibile o spento.
-- **Inizializzazione Dati Automatica:** Caricamento automatico dei dati di prova con `data.sql` in locale e `init.sql` su Docker.
-- **Docker Integration Advanced:** File `compose.yaml` ottimizzato, gestione dei volumi per MySQL e immagini pubblicabili su Docker Hub (`producer-api`, `consumer-web`) per consentire il deploy rapido su ambienti server sprovvisti del codice sorgente.
+- **Spring Security con API Key:** lettura pubblica, scrittura protetta tramite header `X-API-KEY`; protezione disattivabile con `SPRING_SECURITY_ENABLE=false`.
+- **Pattern DTO:** le entity JPA non vengono mai esposte. Il Producer usa `ProdottoDTO` (risposte), `ProdottoRequestDTO` (input `POST`/`PUT`) e `FiltroDTO` (filtri e ordinamento); il Consumer ha un proprio `ProdottoDTO`.
+- **Service layer:** `ProdottoService` (interfaccia) e `ProdottoServiceImpl`.
+- **Gestione errori centralizzata** con `@RestControllerAdvice` lato Producer; eccezioni dedicate lato Consumer (`ApiNonDisponibileException`, `ProdottoNonTrovatoException`).
+- **Configurazione tramite variabili d'ambiente** con default per l'esecuzione locale.
+- **Health check Actuator** su entrambe le applicazioni, usato da Docker Compose per ordinare l'avvio dei servizi.
+- **Docker:** Dockerfile multi-stage per Producer e Consumer (build Maven + runtime JDK 21 con `curl` per gli healthcheck), `compose.yaml` con tre servizi, volume persistente per MySQL e inizializzazione dati con `init.sql`.
+- **UX del Consumer con AJAX:**
+  - aggiornamento automatico della tabella: digitazione con **debounce di 400 ms**, applicazione immediata sulle tendine, `Invio` per aggiornare subito;
+  - ricaricamento parziale di tabella, chip dei filtri attivi e messaggi d'errore senza refresh della pagina (l'input di ricerca non viene toccato, quindi mantiene focus e cursore);
+  - `AbortController` per annullare le richieste obsolete durante la digitazione rapida;
+  - `history.replaceState` per mantenere l'URL sincronizzato con i filtri (condivisibile / bookmarkabile);
+  - chip "Filtri attivi" con link "Rimuovi filtri", overlay di caricamento con spinner.
+- **Interfaccia curata:** CSS custom responsive, badge colorati per categoria, icone SVG inline.
+
+---
+
+## 🔭 Possibili Sviluppi
+
+- Pubblicazione delle immagini su Docker Hub (non ancora fatta: `compose.yaml` fa la `build` dai sorgenti).
+- Filtri e ordinamento eseguiti direttamente nel repository/database invece che in memoria.
+- `404` su `DELETE` di un id inesistente e header `Location` nella risposta `201` del `POST`.
+- Segreti (API Key, password DB) fuori da `compose.yaml`, in un file `.env`.
