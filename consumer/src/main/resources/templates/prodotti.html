@@ -10,9 +10,21 @@
 
 <h1>Elenco Prodotti</h1>
 
-<!-- Contenitore errore (aggiornato via AJAX) -->
+<!-- Messaggi di feedback -->
+<div th:if="${successo}" class="alert alert-success" th:text="${successo}"></div>
 <div id="erroreContainer">
     <div th:if="${errore}" class="alert alert-error" th:text="${errore}"></div>
+</div>
+
+<!-- Azioni pagina -->
+<div class="page-actions">
+    <a th:href="@{/prodotti/nuovo}" class="btn btn-success">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Nuovo Prodotto
+    </a>
 </div>
 
 <!-- Form di ricerca: niente bottone, submit via AJAX -->
@@ -114,6 +126,12 @@
                 <td class="col-azioni">
                     <a th:href="@{/prodotti/{id}(id=${p.id})}"
                        class="btn btn-info btn-sm">Dettaglio</a>
+                    <a th:href="@{/prodotti/modifica/{id}(id=${p.id})}"
+                       class="btn btn-warning btn-sm">Modifica</a>
+                    <form th:action="@{/prodotti/elimina/{id}(id=${p.id})}" method="post" 
+                          style="display: inline;" onsubmit="return confirm('Sei sicuro di voler eliminare questo prodotto?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
+                    </form>
                 </td>
             </tr>
             </tbody>
