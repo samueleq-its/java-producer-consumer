@@ -7,7 +7,7 @@
 | **Sviluppatore** | Daniel Salamone |
 | **Sviluppatore** | Mattia Viada |
 
-**Supporto AI:** Claude __%, DeepSeek __% (da completare), sviluppo manuale e studio personale __%
+**Supporto AI:** Claude 10%, DeepSeek 30% (da completare), sviluppo manuale e studio personale 60%
 
 ---
 
