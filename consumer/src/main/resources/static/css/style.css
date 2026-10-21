@@ -537,6 +537,16 @@ tbody td:nth-child(4) {
 .alert-warning { background: #fffbeb; color: #78350f; border-color: var(--warning); }
 
 /* ============================================================
+   PAGE ACTIONS (Pulsanti in alto a destra)
+   ============================================================ */
+.page-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+/* ============================================================
    PAGINA DETTAGLIO
    ============================================================ */
 .dettaglio {
@@ -751,11 +761,101 @@ tbody td:nth-child(4) {
 }
 
 /* ============================================================
+   FORM PRODOTTO (Crea/Modifica)
+   ============================================================ */
+.form-prodotto {
+    background: var(--surface);
+    padding: 28px 32px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.form-prodotto .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.form-prodotto label {
+    font-size: .85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-muted);
+}
+
+.form-prodotto input,
+.form-prodotto select,
+.form-prodotto textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.form-prodotto input:hover,
+.form-prodotto select:hover,
+.form-prodotto textarea:hover { border-color: #94a3b8; }
+
+.form-prodotto input:focus,
+.form-prodotto select:focus,
+.form-prodotto textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    background: #fff;
+}
+
+.form-prodotto textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.form-prodotto select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path fill='%2364748b' d='M6 8 0 0h12z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+    cursor: pointer;
+}
+
+.form-prodotto .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
     .filtri { grid-template-columns: 1fr 1fr; }
     .btn-cerca { grid-column: 1 / -1; width: 100%; }
+}
+
+@media (max-width: 640px) {
+    .page-actions { flex-direction: column; }
+    .page-actions .btn { width: 100%; }
+    
+    .form-prodotto .form-actions { flex-direction: column; }
+    .form-prodotto .form-actions .btn { width: 100%; }
+    
+    .col-azioni { white-space: nowrap; }
+    .col-azioni form { display: block; margin-top: 8px; }
 }
 
 @media (max-width: 640px) {
