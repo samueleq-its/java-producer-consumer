@@ -1,6 +1,6 @@
 # Consumer – Spring Boot (`consumer`)
 
-## 👥 Collaboratori e AI
+## Collaboratori e AI
 
 | Ruolo | Nome |
 | :--- | :--- |
@@ -11,7 +11,7 @@
 
 ---
 
-## 📝 Descrizione del Progetto
+## Descrizione del Progetto
 
 Il Consumer è un'applicazione **Spring Boot** con interfaccia web **Thymeleaf** (porta `8082`). Mostra il catalogo prodotti interrogando le REST API del Producer tramite `RestClient`, **senza mai accedere direttamente al database**. È in sola lettura: elenco prodotti e dettaglio.
 
@@ -21,13 +21,13 @@ Browser ──▶ Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──�
 
 ---
 
-## 🛠 Tecnologie Utilizzate
+## Tecnologie Utilizzate
 
 Java 21 · Spring Boot 4.1.1 · Spring Web MVC · `RestClient` · Thymeleaf · Actuator (health check) · Lombok · Maven · Docker
 
 ---
 
-## 📌 Requisiti Necessari
+## Requisiti Necessari
 
 - **Locale:** JDK 21 e Maven (wrapper `./mvnw` incluso), più il **Producer in esecuzione** su `http://localhost:8081`
 - **Docker:** Docker Engine / Docker Desktop con Docker Compose
@@ -40,13 +40,13 @@ Il Consumer **non si connette a MySQL** e non ha alcuna configurazione database:
 
 ---
 
-## ⚙️ Configurazione della Producer
+## Configurazione della Producer
 
 Il Consumer si aspetta un Producer raggiungibile all'indirizzo configurato in `API_BASE_URL`. Le API in lettura sono pubbliche; l'header `X-API-KEY` viene comunque inviato in ogni richiesta, quindi `API_KEY` deve coincidere con la `SPRING_SECURITY_API_KEY` del Producer.
 
 ---
 
-## ⚙️ Configurazione della Consumer
+## Configurazione della Consumer
 
 File: `consumer/src/main/resources/application.properties`
 
@@ -61,7 +61,7 @@ In Docker, `compose.yaml` imposta `API_BASE_URL=http://producer:8081/api`: nessu
 
 ---
 
-## 🚀 Istruzioni per l'Avvio
+## Istruzioni per l'Avvio
 
 **In locale** (con il Producer già avviato):
 ```bash
@@ -78,7 +78,7 @@ Interfaccia web: **http://localhost:8082/prodotti** (la root `/` non è mappata)
 
 ---
 
-## 📡 REST API e Pagine
+## REST API e Pagine
 
 **API del Producer usate dal Consumer** (`ProdottoApiClient`):
 
@@ -96,7 +96,7 @@ Interfaccia web: **http://localhost:8082/prodotti** (la root `/` non è mappata)
 
 ---
 
-## ✨ Funzionalità Aggiuntive
+## Funzionalità Aggiuntive
 
 - **Ricerca AJAX:** tabella, filtri attivi e messaggi d'errore si aggiornano senza ricaricare la pagina (debounce 400 ms sulla digitazione, applicazione immediata sulle tendine).
 - **`AbortController`** per annullare le richieste obsolete e **`history.replaceState`** per tenere l'URL condivisibile.
