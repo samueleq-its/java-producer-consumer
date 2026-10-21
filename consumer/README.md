@@ -34,7 +34,7 @@ Java 21 · Spring Boot 4.1.1 · Spring Web MVC · `RestClient` · Thymeleaf · A
 
 ---
 
-## 🗄 Configurazione MySQL
+## Configurazione MySQL
 
 Il Consumer **non si connette a MySQL** e non ha alcuna configurazione database: i dati arrivano solo dal Producer. Il database (`esercitazione_api`) è gestito dal Producer, o dal container `mysqldb` in Docker tramite `init.sql`.
 
