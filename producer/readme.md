@@ -1,7 +1,7 @@
 # COLLABORATORI
 - Nicole Girardi
 - Samuele Querio
-- AI: Gemini
+- AI: Gemini 90%, Copilot 10%
 
 # DESCRIZIONE
 Il producer e una REST API per la gestione di un catalogo di prodotti. Espone

@@ -1,17 +1,12 @@
-	ricerca per categoria, nome, ordinamento in repository
 OK	spring security su post put delete
-
 OK	container per producer
 OK	container per sql
 OK	comunicazione attraverso rete docker
 OK	dati mySql sono persistenti
-
-	immagini su dockerHub
-
 OK	utilizzare variabili di ambiente invece di properties statiche
-
 OK	dockerfile
-
 OK	healthcheck
-
 OK	readme
+
+	ricerca per categoria, nome, ordinamento in repository
+	immagini su dockerHub
