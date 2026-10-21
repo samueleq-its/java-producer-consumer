@@ -8,12 +8,13 @@
 | Ruolo | Nome |
 | :--- | :--- |
 | **Sviluppatore** | Daniel Salamone |
-| **Sviluppatore** | Viada |
-
+| **Sviluppatore** | Mattia Viada |
+| **Sviluppatore** | Samuele Querio |
+| **Sviluppatore** | Nicole Girardi |
 ### Supporto e Strumenti AI
-- **Claude (Anthropic):** 40%
-- **ChatGPT (OpenAI):** 30%
-- **Sviluppo manuale e studio personale:** 30%
+- **Claude:** 10%
+- **DeepSeek:** 30%
+- **Sviluppo manuale e studio personale:** 60%
 
 ---
 
@@ -34,8 +35,6 @@ Browser
   ▼
 Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──JDBC/JPA──▶ MySQL :3306
 ```
-
-> **Nota:** In ambiente Docker, i tre servizi comunicano attraverso una rete dedicata (`bridge`). MySQL utilizza un volume persistente (`mysql-data`) per preservare i dati. Il Consumer è completamente disaccoppiato dal DB.
 
 ### Struttura del Repository
 
@@ -107,9 +106,7 @@ Consumer :8082 ──HTTP/REST──▶ Producer :8081 ──JDBC/JPA──▶ M
 
 ### Esecuzione in Docker
 - **Engine:** Docker Engine / Docker Desktop
-- **Orchestratore:** Docker Compose v2+
-- *(Opzionale)* Account Docker Hub per il push/pull delle immagini pre-built
-
+- **Orchestratore:** Docker Compose
 ---
 
 ## 🗄 Configurazione MySQL
